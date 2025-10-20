@@ -1,0 +1,91 @@
+; Use a newer sandbox version where possible (the newer versions have stronger defaults).
+;
+; TODO: Fall back to lower versions on older platforms.
+(version 3)
+
+; Create a denylist (in contrast with an allowlist).
+;
+; We mark this with a special message containing the `cargo-sandbox` PID, to
+; allow filtering and displaying a nicer debug message inside that.
+(deny default (with message {message}) {deny_with})
+
+; Import the default rules from `/System/Library/Sandbox/Profiles/system.sb`.
+;
+; This is needed for basic things like dynamic library loading, reading
+; various sysctls or otherwise TODO.
+(import "system.sb")
+
+; `(version 3)` is stricter than `(version 1)`, and we seem to need to re-enable the following:
+; TODO: Document each and restrict further.
+(allow file-test-existence)
+(allow file-map-executable)
+(allow process-info*)
+(allow syscall-mach)
+(allow syscall-unix)
+(allow system-fcntl)
+(allow system-mac-syscall) ; TODO
+
+; TODO: Deny specific sysctls?
+; (deny sysctl-read "xyz")
+
+; Allow fork+exec
+(allow process-fork)
+
+; Allow following symlinks (?)
+(allow file-read-metadata)
+
+; Allow all file operations in our custom `TMPDIR`.
+; (but no operations in the global `/private/tmp` or the user-local temporary directories `/xyz`).
+(allow file* (subpath {project_local_tmpdir}))
+; TODO
+;; (allow process-exec file-read* file-write* file-test-existence (subpath "/private/tmp"))
+;; (allow process-exec file-read* file-write* file-test-existence (subpath "/private/var/tmp"))
+;; (allow process-exec file-read* file-write* file-test-existence (subpath {user_temp_dir}))
+; Deny stat in root dir
+;; (deny file-read-metadata (literal {user_temp_dir}))
+
+(allow process-exec file-read* (subpath (string-append {rustup_home} "/toolchains")))
+(allow process-exec file-read* (subpath (string-append {rustup_home} "/bin")))
+(allow file-read* (subpath (string-append {cargo_home} "/registry/src")))
+(allow file-read* (subpath (string-append {cargo_home} "/git/checkouts")))
+
+; Allow reading project directory.
+(allow file-read* file-test-existence (subpath {project_dir}))
+
+; Allow file operations in the target directory.
+(allow file* (subpath {target_dir}))
+
+; Allow executing built build scripts.
+(allow process-exec (subpath {target_dir}))
+; TODO: Allow loading built proc-macros.
+; (allow file-map-executable (subpath {target_dir}))
+
+; Allow executing the system tooling like the C compiler and linker trampolines.
+(allow process-exec file-read* file-test-existence (subpath "/bin"))
+(allow process-exec file-read* file-test-existence (subpath "/usr/bin"))
+; Allow reading headers, linker stubs and executing the actual C compiler and
+; linker binaries.
+(allow process-exec file-read* file-test-existence (subpath {xcode_dir}))
+; Allow `xcrun --show-sdk-path` to work.
+(allow file* (path-prefix (string-append {user_temp_dir} "/xcrun_db")))
+; Allow accessing various Xcode stuff for `xcodebuild` to do its SDK lookup.
+; (allow file* (subpath (string-append {user_temp_dir} "../C/com.apple.DeveloperTools"))) ; TODO
+(allow user-preference-read
+    (preference-domain "com.apple.dt.xcode")
+    (preference-domain "com.apple.dt.xcodebuild")
+    (preference-domain "kcfpreferencesanyapplication"))
+(allow file-read* (subpath "/Library/Developer/CommandLineTools/SDKs")) ; Unclear?
+
+; When allowing network:
+(if {allow_network}
+    ; Allow reading openssl configuration files (e.g. if invoking curl).
+    (allow file-read* file-test-existence (subpath "/private/etc/ssl"))
+    (system-network)
+    (allow network*))
+
+
+; TODO: Homebrew files.
+
+
+; Additional allows are added below.
+; TODO

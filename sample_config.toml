@@ -1,0 +1,53 @@
+[unstable]
+sandbox = true
+
+[sandbox]
+enable = true
+# TODO:
+# network = "allow"
+# network = "deny"
+# network = "warn"
+allow-network = true
+allow-paths = ["/opt/homebrew/bin/clang", "/usr/bin/sh"]
+
+# Example configuration for e.g. a build script that pulls in it's
+# contents from the network.
+#
+# This uses the _package_ name `mylib-sys`; we don't actually care about
+# which version or the source of it, if the user has allowed network
+# access for this package, they'll probably want to keep allowing that
+# even across versions.
+[sandbox.build-scripts.mylib-sys]
+allow-network = true
+
+# This is a bit weird, because the sandbox doesn't actually apply to `sqlx`,
+# **it applies to all dependent crates** of `sqlx`.
+#
+# But maybe we can change this in the future? Maybe compile `proc-macros`
+# differently, or have a shim helper that is sandboxed instead, and which
+# dlopens the proc macro (instead of the compiler doing so), and then copies
+# data to/from it? Something similar to `rust-analyzer`'s `proc-macro-srv`.
+#
+# That would probably be an okay trade-off between raw speed when unsandboxed,
+# and still reasonable performance when sandboxed. And we wouldn't need a
+# recompile / massively change how proc-macros work (at least on the surface).
+[sandbox.proc-macros.sqlx]
+enable = false
+allow-network = true
+allow-paths = [
+    # Absolute path.
+    "/opt/homebrew/bin/clang",
+    # Relative to home dir.
+    "~/",
+    # Relative to workspace root.
+    "./",
+]
+allow-sockets = []
+
+# TODO: Only available in project-local `.cargo/config.toml`?
+#
+# Or maybe we just don't sandbox tests at all? Running them is a much bigger
+# user action than just e.g. opening a project in VSCode.
+[sandbox.test.xyz]
+
+[sandbox.bin.xyz]
