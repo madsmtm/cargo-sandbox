@@ -125,7 +125,7 @@ cargo clean
 - `man sandbox-exec`
 - Examples: `ls /usr/share/sandbox`
 - Examples: `ls /System/Library/Sandbox/Profiles`
-- View logs: `/usr/bin/log stream --style compact --predicate 'process=="kernel" AND sender=="Sandbox"`
+- View logs: `/usr/bin/log stream --style compact --predicate 'process=="kernel" AND sender=="Sandbox"'`
 - Further:   `/usr/bin/log stream --style compact --predicate 'process=="kernel" AND sender=="Sandbox" AND NOT eventMessage contains "searchpartyuseragent" AND NOT eventMessage contains "imagent"'`
   - You might wanna close other programs, it can be spammy.
 - Debugging: <https://chromium.googlesource.com/chromium/src/+/main/docs/mac/sandbox_debugging.md>

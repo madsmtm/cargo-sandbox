@@ -11,6 +11,7 @@ use crate::ProcessKind;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[serde(deny_unknown_fields)]
 pub struct SandboxConfig {
     /// Whether sandboxing is globally enabled.
     #[serde(default)]
@@ -33,6 +34,7 @@ pub struct SandboxConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SandboxPackageConfig {
     /// Whether sandboxing is enabled for this item.
     #[serde(rename = "default")]
@@ -48,6 +50,7 @@ pub struct SandboxPackageConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SandboxNetworkConfig {
     /// Whether to sandbox all network access.
     pub all: Option<SandboxOption>,
@@ -60,6 +63,7 @@ pub struct SandboxNetworkConfig {
 /// A path to allow read or write access to.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[allow(dead_code)]
+#[serde(deny_unknown_fields)]
 pub struct SandboxPathConfig {
     pub path: PathBuf,
     /// Allow/disallow access to the path in general.
@@ -92,11 +96,10 @@ impl fmt::Display for SandboxOption {
 }
 
 impl SandboxConfig {
-    /// Load the configuration from `$CARGO_HOME/config.toml`.
+    /// Load the configuration from `$CARGO_HOME/cargo-sandbox.toml`.
     ///
     /// Example configuration:
     /// ```toml
-    /// [metadata.cargo-sandbox]
     /// # Enable sandboxing. This must be explicitly opted into by the user,
     /// # as it would be too breaking otherwise.
     /// enable = true
@@ -111,52 +114,22 @@ impl SandboxConfig {
     ///
     /// # Example configuration for e.g. a build script that pulls in its
     /// # contents from the network.
-    /// [metadata.cargo-sandbox.build-scripts.mylib-sys]
+    /// [build-scripts.mylib-sys]
     /// allow-network = true
     ///
     /// # The `sqlx` crate requires local network access to the database.
-    /// [metadata.cargo-sandbox.proc-macros.sqlx]
+    /// [proc-macros.sqlx]
     /// allow-network = true
     /// ```
     ///
     /// Project-local configs aren't supported for this, as that'd enable
     /// untrusted projects to just configure away the sandbox.
     pub fn load(cargo_home: &Path) -> io::Result<Self> {
-        #[derive(Debug, Default, Deserialize)]
-        struct Config {
-            #[serde(default)]
-            metadata: Metadata,
-        }
-        #[derive(Debug, Default, Deserialize)]
-        struct Metadata {
-            #[serde(rename = "cargo-sandbox")]
-            #[serde(default)]
-            cargo_sandbox: SandboxConfig,
-        }
-
-        // Copied from <https://docs.rs/cargo-config2/0.1.39/src/cargo_config2/walk.rs.html#23>
-        fn config_path(path: &Path) -> Option<PathBuf> {
-            // https://doc.rust-lang.org/nightly/cargo/reference/config.html#hierarchical-structure
-            //
-            // > Cargo also reads config files without the `.toml` extension,
-            // > such as `.cargo/config`. Support for the `.toml` extension
-            // > was added in version 1.39 and is the preferred form. If both
-            // > files exist, Cargo will use the file without the extension.
-            let config = path.join("config");
-            if config.exists() {
-                return Some(config);
-            }
-            let config = path.join("config.toml");
-            if config.exists() {
-                return Some(config);
-            }
-            None
-        }
-
-        if let Some(path) = config_path(&cargo_home) {
-            let data = fs::read(path)?;
-            let config: Config = toml::from_slice(&data).map_err(|err| io::Error::other(err))?;
-            Ok(config.metadata.cargo_sandbox)
+        let config_path = cargo_home.join("cargo-sandbox.toml");
+        if config_path.exists() {
+            let data = fs::read(config_path)?;
+            let config: Self = toml::from_slice(&data).map_err(|err| io::Error::other(err))?;
+            Ok(config)
         } else {
             Ok(SandboxConfig::default())
         }
