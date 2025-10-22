@@ -1,6 +1,6 @@
 use std::{
     ffi::{CStr, CString, c_char},
-    fmt,
+    fmt::{self, Write},
     path::Path,
     ptr,
 };
@@ -166,6 +166,17 @@ pub fn get_policy(
         developer_dir
     };
 
+    let mut extra = String::new();
+    for path in config.paths {
+        // TODO: Use all configuration values.
+        writeln!(
+            &mut extra,
+            "(allow process-exec file* (subpath {}))",
+            quote_path(&path.path)
+        )
+        .unwrap();
+    }
+
     // NOTE: We _could_ replace some of this string interpolation with the
     // `sandbox_init_with_parameters` function instead - this is used by
     // Firefox, so even though it doesn't appear in any headers, it should
@@ -187,6 +198,7 @@ pub fn get_policy(
             xcode_dir = quote_path(xcode_dir),
             // TODO: Pass further options.
             allow_network = boolean(config.network.all == Some(SandboxOption::Allow)),
+            extra = extra,
         )
         .into(),
     )
