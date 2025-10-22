@@ -77,10 +77,16 @@ pub struct SandboxPathConfig {
 #[serde(rename_all = "kebab-case")]
 pub enum SandboxOption {
     /// Enable sandboxing.
+    ///
+    /// -> (deny *)
     Deny,
     /// Disable sandboxing and warn on accesses that would have been denied.
+    ///
+    /// -> (allow * (with report))
     Warn,
     /// Disable sandboxing.
+    ///
+    /// -> (allow *)
     Allow,
 }
 

@@ -131,10 +131,10 @@ pub fn get_policy(
     project_local_tmpdir: &Path,
     kind: &ProcessKind,
 ) -> CString {
-    // (with send-signal SIGINT)
+    // (with send-signal SIGFPE)
     // (with no-sandbox) can be placed on `process-exec`, disables sandbox
-    //     when spawning those processes. E.g. privileged binaries like
-    //     `/usr/sbin/bless` or `/sbin/mount`.
+    //     when spawning those processes. Useful e.g. on privileged binaries
+    //     like `/usr/sbin/bless` or `/sbin/mount`.
     // (with telemetry) ?
     // (with no-report) can be placed on `deny`
     // (with report) can be placed on `allow`

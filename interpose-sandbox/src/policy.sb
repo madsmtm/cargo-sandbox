@@ -24,6 +24,8 @@
 (allow syscall-unix)
 (allow system-fcntl)
 (allow system-mac-syscall) ; TODO
+; Needed to run JITed language runtimes such as Java or Node.js.
+(allow dynamic-code-generation)
 
 ; TODO: Deny specific sysctls?
 ; (deny sysctl-read "xyz")
