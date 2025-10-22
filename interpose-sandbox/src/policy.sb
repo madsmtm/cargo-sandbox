@@ -75,6 +75,7 @@
     (preference-domain "com.apple.dt.xcodebuild")
     (preference-domain "kcfpreferencesanyapplication"))
 (allow file-read* (subpath "/Library/Developer/CommandLineTools/SDKs")) ; Unclear?
+(allow file-read* file-test-existence file-map-executable (subpath "/Library/Developer/PrivateFrameworks"))
 
 ; When allowing network:
 (if {allow_network}
