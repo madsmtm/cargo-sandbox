@@ -1,3 +1,4 @@
+use std::collections::{BTreeSet, HashMap};
 use std::ffi::{OsStr, OsString};
 use std::path::Path;
 use std::process::{Command, ExitCode};
@@ -77,27 +78,36 @@ fn main() -> ExitCode {
 
         log_thread.join().unwrap();
 
+        let mut entries: HashMap<_, Vec<_>> = HashMap::new();
         for entry in log_receiver {
+            // Merge messages with the same source.
+            entries
+                .entry((entry.kind, entry.package))
+                .or_default()
+                .push(entry.message);
+        }
+        for ((kind, package), messages) in entries {
             eprint!(
                 "{}warning{}: ",
                 CARGO_WARN.render(),
                 CARGO_WARN.render_reset()
             );
-            match entry.kind {
+            match kind {
                 SandboxLogKind::Rustc => {
-                    eprintln!(
-                        "hit sandbox restriction in the compilation of `{}`: ",
-                        entry.package
-                    );
+                    eprintln!("hit sandbox restriction in the compilation of `{package}`: ");
                 }
                 SandboxLogKind::BuildScript => {
-                    eprintln!(
-                        "hit sandbox restriction in `{}`'s build script: ",
-                        entry.package
-                    );
+                    eprintln!("hit sandbox restriction in `{package}`'s build script: ");
                 }
             }
-            eprintln!("         {}", entry.message);
+            // Deduplicate messages with the same source while keeping the
+            // order they appeared in.
+            let mut seen = BTreeSet::new();
+            for message in messages {
+                if seen.insert(message.clone()) {
+                    eprintln!("         {message}");
+                }
+            }
         }
 
         if status.success() {

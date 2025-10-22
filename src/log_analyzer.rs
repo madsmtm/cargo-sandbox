@@ -79,7 +79,7 @@ pub struct SandboxLogMessage {
     pub package: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SandboxLogKind {
     Rustc,
     BuildScript,
@@ -110,6 +110,10 @@ impl<'de> serde::Deserialize<'de> for SandboxLogMessage {
                     message.rsplit_once("\ninterpose-sandbox(").unwrap();
                 let sandbox_message = sandbox_message
                     .strip_prefix("Sandbox: ")
+                    .unwrap_or(sandbox_message);
+                let sandbox_message = sandbox_message
+                    .split_once(" duplicate reports for Sandbox: ")
+                    .map(|(_dups, message)| message)
                     .unwrap_or(sandbox_message);
 
                 let custom = custom.strip_suffix(")").unwrap();
