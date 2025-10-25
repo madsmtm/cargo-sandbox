@@ -48,8 +48,9 @@
 
 (allow process-exec file-read* (subpath (string-append {rustup_home} "/toolchains")))
 (allow process-exec file-read* (subpath (string-append {rustup_home} "/bin")))
-(allow file-read* (subpath (string-append {cargo_home} "/registry/src")))
-(allow file-read* (subpath (string-append {cargo_home} "/git/checkouts")))
+; file-clone needed for jemalloc-sys and zstd-sys?
+(allow file-read* file-clone (subpath (string-append {cargo_home} "/registry/src")))
+(allow file-read* file-clone (subpath (string-append {cargo_home} "/git/checkouts")))
 
 ; Allow reading project directory.
 (allow file-read* file-test-existence (subpath {project_dir}))
@@ -92,3 +93,5 @@
 
 ; Additional allows are added below.
 {extra}
+
+; TODO: `dsymutil` seems to want `file-read-data` on all parent directories?

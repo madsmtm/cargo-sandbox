@@ -133,3 +133,4 @@ cargo clean
   - Also: <https://bazel.build/docs/sandboxing>
   - Source: <https://github.com/bazelbuild/bazel/blob/0972528f8d6b236afffa960da6b7c92d023b35df/src/main/java/com/google/devtools/build/lib/sandbox/DarwinSandboxedSpawnRunner.java#L274-L320>
 - Nix: <https://nix.dev/manual/nix/2.32/command-ref/conf-file.html#conf-sandbox>
+- OpenAI's Codex: <https://github.com/openai/codex/blob/main/docs/sandbox.md>
