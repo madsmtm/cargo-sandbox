@@ -286,7 +286,10 @@ impl<'a> ProcessKind<'a> {
             }
         } else if bin.file_name().unwrap() == "rustc" {
             let first_arg = args.clone().skip(1).next();
-            if first_arg == Some(c"-vV") || first_arg == Some(c"-") {
+            if first_arg == Some(c"-vV")
+                || first_arg == Some(c"-")
+                || first_arg == Some(c"--print=target-spec-json")
+            {
                 return ProcessKind::Other;
             }
 
@@ -301,7 +304,12 @@ impl<'a> ProcessKind<'a> {
             let package = env
                 .clone()
                 .find_map(|env| env.to_bytes().strip_prefix(b"CARGO_PKG_NAME="))
-                .unwrap();
+                .unwrap_or_else(|| {
+                    panic!(
+                        "failed finding CARGO_PKG_NAME in {:#?}",
+                        args.clone().collect::<Vec<_>>()
+                    )
+                });
             let package = str::from_utf8(package).unwrap();
 
             let mut externs = vec![];
