@@ -312,12 +312,12 @@ impl<'a> ProcessKind<'a> {
                     let extern_ = args.next().unwrap();
                     let extern_ = extern_.to_str().unwrap();
                     // NOTE: We're blindly trusting the name here!
-                    if let Some((package, _path)) = extern_.split_once("=") {
+                    let extern_ = if let Some((package, _path)) = extern_.split_once("=") {
                         package
                     } else {
                         extern_
                     };
-                    externs.push(package);
+                    externs.push(extern_);
                 }
                 if arg == c"--out-dir" {
                     out_dir = Some(Path::new(OsStr::from_bytes(

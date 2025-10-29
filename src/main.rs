@@ -42,7 +42,10 @@ fn main() -> ExitCode {
         .status()
         .unwrap();
     assert!(cmd.success(), "failed building `interpose-sandbox`");
-    let dylib_path = cargo_sandbox_dir.join("target/debug/libinterpose_sandbox.dylib");
+    let dylib_path = cargo_sandbox_dir
+        .join("target")
+        .join(env!("HOST_TARGET"))
+        .join("debug/libinterpose_sandbox.dylib");
 
     // Append interposition lib to `DYLD_INSERT_LIBRARIES`.
     // TODO: Prepend vs. append?
