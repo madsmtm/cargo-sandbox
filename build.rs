@@ -1,9 +1,11 @@
 // use std::process::Command;
 
 fn main() {
-    // let status = Command::new("curl")
-    //     .arg("https://google.com")
-    //     .status()
-    //     .unwrap();
-    // assert!(status.success());
+    // The script doesn't depend on our code.
+    println!("cargo:rerun-if-changed=build.rs");
+
+    println!(
+        "cargo::rustc-env=HOST_TARGET={}",
+        std::env::var_os("TARGET").unwrap().display()
+    );
 }

@@ -35,6 +35,8 @@ fn main() -> ExitCode {
     let cargo_sandbox_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let cmd = Command::new(&cargo)
         .arg("build")
+        .arg("--target")
+        .arg(env!("HOST_TARGET"))
         .arg("--manifest-path")
         .arg(cargo_sandbox_dir.join("interpose-sandbox/Cargo.toml"))
         .status()
