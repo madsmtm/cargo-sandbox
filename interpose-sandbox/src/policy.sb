@@ -52,8 +52,8 @@
 (allow file-read* file-clone (subpath (string-append {cargo_home} "/registry/src")))
 (allow file-read* file-clone (subpath (string-append {cargo_home} "/git/checkouts")))
 
-; Allow reading project directory.
-(allow file-read* file-test-existence (subpath {project_dir}))
+; Allow reading source directory.
+(allow file-read* file-test-existence (subpath {manifest_dir}))
 
 ; Allow file operations in the target directory.
 (allow file* (subpath {target_dir}))

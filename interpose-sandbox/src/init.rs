@@ -127,7 +127,6 @@ impl Drop for SandboxError {
 
 pub fn get_policy(
     config: SandboxPackageConfig,
-    project_dir: &Path,
     project_local_tmpdir: &Path,
     kind: &ProcessKind,
 ) -> CString {
@@ -193,7 +192,7 @@ pub fn get_policy(
             project_local_tmpdir = quote_path(project_local_tmpdir),
             rustup_home = quote_path(&RUSTUP_HOME.get().unwrap()),
             cargo_home = quote_path(&CARGO_HOME.get().unwrap()),
-            project_dir = quote_path(&project_dir),
+            manifest_dir = quote_path(kind.manifest_dir()),
             target_dir = quote_path(kind.target_dir()),
             xcode_dir = quote_path(xcode_dir),
             // TODO: Pass further options.

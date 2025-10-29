@@ -99,10 +99,9 @@ unsafe extern "C" fn posix_spawn(
 
     let config = CONFIG.get().unwrap().config_for(&kind);
 
-    let project_dir = kind.target_dir().parent().unwrap();
     let project_local_tmpdir = kind.target_dir().join("sandbox-tmp");
     create_dir_all(&project_local_tmpdir).unwrap();
-    let policy = get_policy(config, &project_dir, &project_local_tmpdir, &kind);
+    let policy = get_policy(config, &project_local_tmpdir, &kind);
 
     // Wrap and spawn inside `sandbox-exec`. This basically ends up calling
     // `sandbox_init`, but allows us to avoid manually fork+exec-ing.
@@ -185,10 +184,9 @@ unsafe extern "C" fn execve(
 
     let config = CONFIG.get().unwrap().config_for(&kind);
 
-    let project_dir = kind.target_dir().parent().unwrap();
     let project_local_tmpdir = kind.target_dir().join("sandbox-tmp");
     create_dir_all(&project_local_tmpdir).unwrap(); // Maybe even mount_tmpfs?
-    let policy = get_policy(config, &project_dir, &project_local_tmpdir, &kind);
+    let policy = get_policy(config, &project_local_tmpdir, &kind);
 
     let (_storage, env) = unsafe { override_env(&project_local_tmpdir, envp) };
 
@@ -249,11 +247,13 @@ enum ProcessKind<'a> {
         package: &'a str,
         target_dir: &'a Path,
         // TODO: Add source (git or registry).
+        manifest_dir: &'a Path,
     },
     Rustc {
         package: &'a str,
         externs: Vec<&'a str>,
         target_dir: &'a Path,
+        manifest_dir: &'a Path,
     },
     Other,
 }
@@ -266,6 +266,7 @@ impl<'a> ProcessKind<'a> {
     ) -> Self {
         // TODO: Add test that the user can't overwrite these weirdly.
         let bin = Path::new(OsStr::from_bytes(bin.to_bytes()));
+
         if bin.file_name().unwrap() == "build-script-build" {
             // TODO: Or maybe use `CARGO_PKG_NAME`? Or can that be overwritten by
             // build scripts / `.cargo/config.toml` too? If so, then we probably
@@ -280,9 +281,22 @@ impl<'a> ProcessKind<'a> {
                 .ancestors()
                 .find(|dir| dir.file_name() == Some(OsStr::new("target")))
                 .unwrap();
+
+            let manifest_dir = env
+                .clone()
+                .find_map(|env| env.to_bytes().strip_prefix(b"CARGO_MANIFEST_DIR="))
+                .map(|bin| Path::new(OsStr::from_bytes(bin)))
+                .unwrap_or_else(|| {
+                    panic!(
+                        "failed finding CARGO_MANIFEST_DIR in {:#?}",
+                        args.clone().collect::<Vec<_>>()
+                    )
+                });
+
             ProcessKind::BuildScript {
                 package,
                 target_dir,
+                manifest_dir,
             }
         } else if bin.file_name().unwrap() == "rustc" {
             let first_arg = args.clone().skip(1).next();
@@ -345,10 +359,22 @@ impl<'a> ProcessKind<'a> {
                 .find(|dir| dir.file_name() == Some(OsStr::new("target")))
                 .unwrap();
 
+            let manifest_dir = env
+                .clone()
+                .find_map(|env| env.to_bytes().strip_prefix(b"CARGO_MANIFEST_DIR="))
+                .map(|bin| Path::new(OsStr::from_bytes(bin)))
+                .unwrap_or_else(|| {
+                    panic!(
+                        "failed finding CARGO_MANIFEST_DIR in {:#?}",
+                        args.clone().collect::<Vec<_>>()
+                    )
+                });
+
             ProcessKind::Rustc {
                 package,
                 externs,
                 target_dir,
+                manifest_dir,
             }
         } else {
             // TODO: Maybe enforce either Cargo or rustup here?
@@ -368,6 +394,14 @@ impl<'a> ProcessKind<'a> {
         match self {
             Self::BuildScript { target_dir, .. } => target_dir,
             Self::Rustc { target_dir, .. } => target_dir,
+            Self::Other => unreachable!(),
+        }
+    }
+
+    fn manifest_dir(&self) -> &'a Path {
+        match self {
+            Self::BuildScript { manifest_dir, .. } => manifest_dir,
+            Self::Rustc { manifest_dir, .. } => manifest_dir,
             Self::Other => unreachable!(),
         }
     }
