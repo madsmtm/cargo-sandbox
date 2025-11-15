@@ -115,6 +115,10 @@ impl<'de> serde::Deserialize<'de> for SandboxLogMessage {
                     .split_once(" duplicate reports for Sandbox: ")
                     .map(|(_dups, message)| message)
                     .unwrap_or(sandbox_message);
+                let sandbox_message = sandbox_message
+                    .split_once(" duplicate report for Sandbox: ")
+                    .map(|(_dups, message)| message)
+                    .unwrap_or(sandbox_message);
 
                 let custom = custom.strip_suffix(")").unwrap();
                 let (_pid, custom) = custom.split_once(", ").unwrap();
