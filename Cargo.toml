@@ -1,5 +1,5 @@
 [workspace]
-members = ["interpose-sandbox", "tests/cargo/*"]
+members = ["interpose-sandbox"]
 
 [package]
 name = "cargo-sandbox"
@@ -7,18 +7,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anstream = "0.6.21"
 anstyle = "1.0.13"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 
 [dev-dependencies]
-ui_test = "0.30.2"
-ctrlc = "3.4.5"
-
-[[test]]
-name = "ui"
-path = "ui.rs"
-harness = false
+cargo-test-support = "0.8.1"
+snapbox = "0.6.21"
 
 [profile.interpose-sandbox]
 inherits = "release"

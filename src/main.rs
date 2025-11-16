@@ -1,6 +1,7 @@
+use anstream::{eprint, eprintln};
 use std::collections::{BTreeSet, HashMap};
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::sync::mpsc::channel;
 use std::thread;
@@ -24,7 +25,16 @@ fn main() -> ExitCode {
     //
     // TODO: Implement some sort of modified `rustup` searching, to avoid
     // malicious `rust-toolchain.toml`.
-    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let cargo = if let Some(cargo) = std::env::var_os("CARGO")
+        && let cargo = PathBuf::from(cargo)
+        && cargo.file_stem() != Some(OsStr::new("cargo-sandbox"))
+    {
+        cargo
+    } else {
+        // TODO: Maybe invoke `rustup which cargo` here, to avoid having to
+        // "carry forwards" the interposition library.
+        PathBuf::from(OsString::from("cargo"))
+    };
 
     // Unpack `interpose-sandbox` into temporary directory and build
     // `libinterpose_dylib.dylib`.
@@ -33,15 +43,28 @@ fn main() -> ExitCode {
     //
     // TODO: Maybe avoid this somehow by shipping `interpose-sandbox` differently?
     let cargo_sandbox_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let cmd = Command::new(&cargo)
-        .arg("build")
+    let mut cmd = Command::new(&cargo);
+    cmd.arg("build")
         .arg("--target")
         .arg(env!("HOST_TARGET"))
         .arg("--manifest-path")
-        .arg(cargo_sandbox_dir.join("interpose-sandbox/Cargo.toml"))
-        .status()
-        .unwrap();
-    assert!(cmd.success(), "failed building `interpose-sandbox`");
+        .arg(cargo_sandbox_dir.join("interpose-sandbox/Cargo.toml"));
+    if std::env::var_os("__CARGO_TEST_ROOT").is_some() {
+        // Unset `cargo-test-support` envs.
+        cmd.env_remove("HOME")
+            .env_remove("CARGO_HOME")
+            .env_remove("__CARGO_TEST_ROOT")
+            .env_remove("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS")
+            .env_remove("__CARGO_TEST_DISABLE_GLOBAL_KNOWN_HOST")
+            .env_remove("__CARGO_TEST_FIXED_RETRY_SLEEP_MS")
+            .env_remove("CARGO_INCREMENTAL")
+            .env_remove("GIT_CONFIG_NOSYSTEM")
+            .env_remove("CARGO");
+        // Avoid `interpose-sandbox`'s build status polluting the actual status.
+        cmd.arg("--quiet");
+    }
+    let status = cmd.status().unwrap();
+    assert!(status.success(), "failed building `interpose-sandbox`");
     let dylib_path = cargo_sandbox_dir
         .join("target")
         .join(env!("HOST_TARGET"))
@@ -102,7 +125,7 @@ fn main() -> ExitCode {
                     eprintln!("hit sandbox restriction in the compilation of `{package}`: ");
                 }
                 SandboxLogKind::BuildScript => {
-                    eprintln!("hit sandbox restriction in `{package}`'s build script: ");
+                    eprintln!("hit sandbox restriction in `{package}`'s build script:");
                 }
             }
             // Deduplicate messages with the same source while keeping the

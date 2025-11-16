@@ -167,13 +167,17 @@ pub fn get_policy(
 
     let mut extra = String::new();
     for path in config.paths {
-        // TODO: Use all configuration values.
-        writeln!(
-            &mut extra,
-            "(allow process-exec file* (subpath {}))",
-            quote_path(&path.path)
-        )
-        .unwrap();
+        // TODO: Use configuration values properly.
+        let p = quote_path(&path.path);
+        if let Some(option) = &path.default_ {
+            writeln!(&mut extra, "({option} process-exec file* (subpath {p}))").unwrap();
+        }
+        if let Some(option) = &path.read {
+            writeln!(&mut extra, "({option} file-read* (subpath {p}))").unwrap();
+        }
+        if let Some(option) = &path.write {
+            writeln!(&mut extra, "({option} file-write* (subpath {p}))").unwrap();
+        }
     }
 
     // NOTE: We _could_ replace some of this string interpolation with the

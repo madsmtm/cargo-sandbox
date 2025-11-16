@@ -63,6 +63,9 @@
 ; TODO: Allow loading built proc-macros.
 ; (allow file-map-executable (subpath {target_dir}))
 
+; TODO: Allow file read and process-exec in all paths in `PATH` instead of this.
+(allow process-exec file-read* file-test-existence (subpath "/sbin"))
+
 ; Allow executing the system tooling like the C compiler and linker trampolines.
 (allow process-exec file-read* file-test-existence (subpath "/bin"))
 (allow process-exec file-read* file-test-existence (subpath "/usr/bin"))
@@ -80,13 +83,16 @@
 (allow file-read* (subpath "/Library/Developer/CommandLineTools/SDKs")) ; Unclear?
 (allow file-read* file-test-existence file-map-executable (subpath "/Library/Developer/PrivateFrameworks"))
 
-; When allowing network:
-(if {allow_network}
-    ; Allow reading openssl configuration files (e.g. if invoking curl).
-    (allow file-read* file-test-existence (subpath "/private/etc/ssl"))
-    (system-network)
-    (allow network*))
+(if {allow_network} (system-network))
+(if {allow_network} (allow network*))
 
+; Needed for curl. TODO: Is anything else needed?
+(if {allow_network} (allow file-read* file-test-existence (subpath "/private/etc/ssl")))
+(if {allow_network} (allow necp-client-open))
+(if {allow_network} (allow system-necp-client-action))
+(if {allow_network} (allow socket-option-set))
+(if {allow_network} (allow socket-option-get))
+(if {allow_network} (allow mach-lookup (global-name "com.apple.SystemConfiguration.configd")))
 
 ; TODO: Homebrew files.
 
