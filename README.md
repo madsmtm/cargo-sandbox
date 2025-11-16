@@ -1,4 +1,32 @@
+# Sandboxing Cargo
+
+Goal: Allow fearlessly running `cargo-sandbox build` within an arbitrary untrusted Rust project.
+
+This includes _building_ (though not necessarily _running_) the code for arbitrary untrusted dependencies.
+
 Obligatory XKCD: <https://xkcd.com/2044/>
+
+
+## TODO
+
+Trust roots; we'd probably trust packages from crates.io, but probably not git sources, or at least not by default.
+
+`[hints]` keys to allow library authors to request certain sandboxing opt-outs?
+- E.g. `hints.sandbox.build-script.allow-network = "message"` or `hints.sandbox.proc-macro.allow-network = "message"`.
+
+Deterministic builds:
+- Disallow Xcode?
+
+How do we ensure that this stays secure?
+- Feature additions to Cargo must have a `# Security` section.
+- Help ensure process spawning and file system access is wrapped with `clippy.toml` deny methods.
+
+Add an option to run as a different less-privileged user / w. ACLs?
+- That would mostly resolve the `TMPDIR` shenanigans.
+- See <https://developer.apple.com/library/archive/documentation/Security/Conceptual/AuthenticationAndAuthorizationGuide/Introduction/Introduction.html>
+
+Networking:
+- Socket vs. TCP/UDP, local vs. external.
 
 TODO: Learn Scheme
 
@@ -88,6 +116,12 @@ cp target/debug/cargo-sandbox ./cargo-sandbox
 cargo clean
 ./cargo-sandbox build -pcargo-sandbox
 ```
+
+## Platform details
+
+### macOS
+
+macOS uses `sandbox-exec` / `sandbox_init`, TODO.
 
 ## Resources
 

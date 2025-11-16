@@ -1,14 +1,50 @@
-# Sandboxing Cargo
+# Threat model for sandboxing in Cargo
 
-Goal: Allow fearlessly running `cargo build` within an arbitrary untrusted Rust project.
+Cargo has various attack vectors that a malicous acter can use to execute code or exfiltrate data at compile time on the user's host machine.
 
-Attacks:
-- Data exfiltration
-  - General user data (username, system version, installed packages, current terminal/editor, usage history etc.)
-    - If network access is enabled, this cannot be prevented.
-  - Private user data (personal data, source code for other projects, keys etc.)
-- Persistence
-  - TODO: Prevent malware persistence.
+The most prominent of these is probably [build scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html), which (by design) allow arbitrary code execution at build time, usually to invoke a C compiler or similar.
+
+Additionally, the Rust compiler is in itself a huge piece of software that may have security issues. Examples include:
+- [Procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html) are `dlopen`ed in the compiler's process and allow arbitrary code execution.
+- File reading functionality such as `include_str!("/etc/passwd")` or `#[path = "..."]`. See also [RFC 2794](https://github.com/rust-lang/rfcs/pull/2794).
+- A buffer overflow in e.g. LLVM might allow malicous code to break out of any local sandbox that `rustc` were to implement.
+
+Finally, local configuration files (`.cargo/config.toml`, `rust-toolchain.toml` and local `Cargo.toml`, though not dependencies' `Cargo.toml`) allow things such as overriding the linker (with e.g. a local script) or the Rust toolchain (potentially downgrading to a less secure version).
+
+All of these are within scope of this threat model.
+
+
+## Anatomy of a security attack
+
+### Data access
+
+The primary thing we want to avoid is for a malicous party to gain access to sensitive data.
+
+- General user data (username, system version, installed packages, current terminal/editor, usage history etc.)
+- Private user data (private keys, personal data, source code for other projects etc.)
+
+This includes things like accessing connected (host machine capabilities); while you can do a lot of _damage_,
+
+### Exfiltration
+
+Generally.
+
+Without being able to exfiltrate the , the , which is a denial of service issue, but not necessarily a _security_ issue.
+
+By limiting data access, we thereby limit the amount of damage one can do.
+
+- Usually needs some form of network access.
+- But also possible in more limited forms with e.g. embedding sensitive data in a binary, and then getting access to said binary.
+
+
+### Persistence
+
+TODO.
+
+### Escalation
+
+TODO.
+
 
 Requirements:
 - We want to give `cargo` the ability to do network access etc., since it needs that for e.g. `cargo update`.
@@ -23,6 +59,8 @@ Requirements:
 - Should work with the `rustup` trampolines.
 - Should work with Cargo things like `[target.x] runner = "..."` or `RUSTC_WRAPPER` (though less of a requirement).
 - Should work with invocations like `cargo script`.
+- Should protect against buffer overflows etc. in `rustc` or LLVM that the user can exploit.
+- Make detection / allowing easy.
 
 Assumptions:
 - The user's current environment variables aren't malicious.
@@ -72,43 +110,21 @@ Definitely needs to be denied:
 Supported operations:
 - `cargo check`.
 - `cargo build`.
+- `cargo doc` (TODO).
+- `cargo fmt` (TODO).
+- `cargo clippy` (TODO).
 
 Out of scope:
 - Tools installed with `cargo install`.
 - Security of metadata fields used by other tools.
-- `cargo test`/`cargo run`/`cargo bench` (for now at least). Running these are always the result of an explicit user action.
-  - A large attack vector here would be `ctor`s.
+- `cargo test`/`cargo run`/`cargo bench` (for now at least)
+  - Running these are always the result of an explicit user action.
+  - A large attack vector here would be `#[global_allocator]`, `ctor`s and similar global stuff and linker magic.
 - `rust-toolchain.toml` overrides. These are problematic, see e.g. [`mallory`](https://github.com/jonas-schievink/mallory), but this problem cannot be handled by Cargo (since it happens before Cargo is even invoked).
 - `cargo publish`, this copies symlinked things, e.g. file a symlinked to `~/.ssh`.
 - Other configuration that makes Cargo's read/write files inside its process space
   - Might be problematic: `package.workspace`, `[patch]`, `dependencies.*.path`, `workspace.members`?
   - Keys that are probably safe: `package.readme`, `package.license-file`, `package.build`, `package.exclude/include`.
 - Make build scripts and proc-macros more reproducible by having them depend less on the environment.
-
-## TODO
-
-Trust roots; we'd probably trust packages from crates.io, but probably not git sources, or at least not by default.
-
-`[hints]` keys to allow library authors to request certain sandboxing opt-outs?
-- E.g. `hints.sandbox.build-script.allow-network = "message"` or `hints.sandbox.proc-macro.allow-network = "message"`.
-
-Deterministic builds:
-- Disallow Xcode?
-
-How do we ensure that this stays secure?
-- Feature additions to Cargo must have a `# Security` section.
-- Help ensure process spawning and file system access is wrapped with `clippy.toml` deny methods.
-
-Add an option to run as a different less-privileged user / w. ACLs?
-- That would mostly resolve the `TMPDIR` shenanigans.
-- See <https://developer.apple.com/library/archive/documentation/Security/Conceptual/AuthenticationAndAuthorizationGuide/Introduction/Introduction.html>
-
-Networking:
-- Socket vs. TCP/UDP, local vs. external.
-
-
-## Platform details
-
-### macOS
-
-macOS uses `sandbox-exec` / `sandbox_init`, TODO.
+- Denial of service attacks like system OOM or exhausting available disk space.
+- Embedded `#![debugger_visualizer(...)]` scripts (the security of these are the responsibility of the debugger).
