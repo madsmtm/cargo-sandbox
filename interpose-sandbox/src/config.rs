@@ -132,12 +132,10 @@ impl SandboxConfig {
     /// untrusted projects to just configure away the sandbox.
     pub fn load(cargo_home: &Path) -> io::Result<Self> {
         let config_path = cargo_home.join("cargo-sandbox.toml");
-        if config_path.exists() {
-            let data = fs::read(config_path)?;
-            let config: Self = toml::from_slice(&data).map_err(|err| io::Error::other(err))?;
-            Ok(config)
-        } else {
-            Ok(SandboxConfig::default())
+        match fs::read(config_path) {
+            Ok(data) => Ok(toml::from_slice(&data).map_err(|err| io::Error::other(err))?),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(SandboxConfig::default()),
+            Err(err) => Err(err),
         }
     }
 
