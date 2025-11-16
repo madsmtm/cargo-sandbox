@@ -229,3 +229,46 @@ fn env_vars() {
     // );
     // p.cargo("check").run();
 }
+
+#[cargo_test(public_network_test)]
+fn cc() {
+    let p = project()
+        .file(
+            sandbox_config_file(),
+            r#"
+                global = "deny"
+            "#,
+        )
+        .file(
+            "Cargo.toml",
+            r#"
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                edition = "2024"
+
+                [features]
+                allow = []
+
+                [build-dependencies]
+                cc = "1.0"
+            "#,
+        )
+        .file("src/lib.rs", "")
+        .file("foo.c", "int foo() { return 42; }")
+        .file(
+            "build.rs",
+            r#"
+                fn main() {
+                    cc::Build::new().file("foo.c").compile("foo");
+                }
+            "#,
+        )
+        .build();
+
+    // TODO: Make this also work with `--target aarch64-apple-ios` after
+    // clearing the `xcrun` cache with `xcrun --kill-cache`.
+    p.cargo("check")
+        .with_stderr_does_not_contain("[WARNING]")
+        .run();
+}

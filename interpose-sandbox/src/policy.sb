@@ -74,6 +74,7 @@
 (allow process-exec file-read* file-test-existence (subpath {xcode_dir}))
 ; Allow `xcrun --show-sdk-path` to work.
 (allow file* (path-prefix (string-append {user_temp_dir} "/xcrun_db")))
+(allow file-read-data (literal "/Library/Preferences/com.apple.dt.Xcode.plist")) ; Check license agreement
 ; Allow accessing various Xcode stuff for `xcodebuild` to do its SDK lookup.
 ; (allow file* (subpath (string-append {user_temp_dir} "../C/com.apple.DeveloperTools"))) ; TODO
 (allow user-preference-read
