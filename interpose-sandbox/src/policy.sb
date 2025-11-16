@@ -91,6 +91,10 @@
 
 ; TODO: Homebrew files.
 
+; For nix-darwin. TODO: Can we avoid this somehow?
+(allow file-read* file-write* (subpath "/dev/tty"))
+(allow process-exec file-read* (subpath "/nix/store"))
+
 
 ; Additional allows are added below.
 {extra}
