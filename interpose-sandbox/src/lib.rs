@@ -20,6 +20,7 @@ static CARGO_HOME: OnceLock<PathBuf> = OnceLock::new();
 static RUSTUP_HOME: OnceLock<PathBuf> = OnceLock::new();
 static CONFIG: OnceLock<SandboxConfig> = OnceLock::new();
 static DEVELOPER_DIR: OnceLock<PathBuf> = OnceLock::new();
+static PATH: OnceLock<Vec<PathBuf>> = OnceLock::new();
 
 /// Load the sandbox configuration.
 ///
@@ -52,6 +53,11 @@ fn load_env() {
         OsString::from_vec(output.stdout)
     });
     DEVELOPER_DIR.set(PathBuf::from(developer_dir)).unwrap();
+
+    let paths: Vec<PathBuf> = std::env::var_os("PATH")
+        .map(|path| std::env::split_paths(&path).collect())
+        .unwrap_or_default();
+    PATH.set(paths).unwrap();
 }
 
 /// Interpose `posix_spawn`.

@@ -63,12 +63,6 @@
 ; TODO: Allow loading built proc-macros.
 ; (allow file-map-executable (subpath {target_dir}))
 
-; TODO: Allow file read and process-exec in all paths in `PATH` instead of this.
-(allow process-exec file-read* file-test-existence (subpath "/sbin"))
-
-; Allow executing the system tooling like the C compiler and linker trampolines.
-(allow process-exec file-read* file-test-existence (subpath "/bin"))
-(allow process-exec file-read* file-test-existence (subpath "/usr/bin"))
 ; Allow reading headers, linker stubs and executing the actual C compiler and
 ; linker binaries.
 (allow process-exec file-read* file-test-existence (subpath {xcode_dir}))

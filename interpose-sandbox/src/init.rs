@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    CARGO_HOME, DEVELOPER_DIR, ProcessKind, RUSTUP_HOME,
+    CARGO_HOME, DEVELOPER_DIR, PATH, ProcessKind, RUSTUP_HOME,
     config::{SandboxOption, SandboxPackageConfig},
     proc_pidinfo::parent_cargo_sandbox_pid,
 };
@@ -166,17 +166,35 @@ pub fn get_policy(
     };
 
     let mut extra = String::new();
-    for path in config.paths {
+
+    // Allow executing tooling in the user's PATH, such as the C compiler and
+    // linker trampolines.
+    write!(
+        &mut extra,
+        "(allow process-exec file-read* file-test-existence "
+    )
+    .unwrap();
+    for path in PATH.get().unwrap() {
+        writeln!(&mut extra, "(subpath {})", quote_path(&path)).unwrap();
+
+        // Allow `../lib` as well
+        if let Some(parent) = path.parent() {
+            writeln!(&mut extra, "(subpath {})", quote_path(&parent.join("lib"))).unwrap();
+        }
+    }
+    writeln!(&mut extra, ")").unwrap();
+
+    for cfg in config.paths {
         // TODO: Use configuration values properly.
-        let p = quote_path(&path.path);
-        if let Some(option) = &path.default_ {
-            writeln!(&mut extra, "({option} process-exec file* (subpath {p}))").unwrap();
+        let path = quote_path(&cfg.path);
+        if let Some(option) = &cfg.default_ {
+            writeln!(&mut extra, "({option} process-exec file* (subpath {path}))").unwrap();
         }
-        if let Some(option) = &path.read {
-            writeln!(&mut extra, "({option} file-read* (subpath {p}))").unwrap();
+        if let Some(option) = &cfg.read {
+            writeln!(&mut extra, "({option} file-read* (subpath {path}))").unwrap();
         }
-        if let Some(option) = &path.write {
-            writeln!(&mut extra, "({option} file-write* (subpath {p}))").unwrap();
+        if let Some(option) = &cfg.write {
+            writeln!(&mut extra, "({option} file-write* (subpath {path}))").unwrap();
         }
     }
 
