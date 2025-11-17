@@ -17,7 +17,7 @@ fn main() -> ExitCode {
 
     // If called under Cargo as `cargo sandbox xyz`.
     if args.peek().map(|s| &**s) == Some(OsStr::new("sandbox")) {
-        // TODO: Provide configuration option to allow this usage.
+        // TODO: Provide configuration option to allow this usage?
         eprintln!("must be invoked as `cargo-sandbox` for TODO reason");
         return ExitCode::FAILURE;
     }
@@ -27,6 +27,27 @@ fn main() -> ExitCode {
     let mut helper_dylib = current_bin.with_file_name("cargo-sandbox-helper");
     // Some platforms' executable files have extensions (e.g. Windows).
     helper_dylib.set_extension(std::env::consts::EXE_EXTENSION);
+
+    match helper_dylib.try_exists() {
+        Ok(true) => {}
+        Ok(false) => {
+            eprintln!(
+                "{}error{}: it seems that you don't have the required helper installed (looked in {}). Please install it with `cargo install cargo-sandbox`",
+                CARGO_ERROR.render(),
+                CARGO_ERROR.render_reset(),
+                helper_dylib.display(),
+            );
+            return ExitCode::FAILURE;
+        }
+        Err(err) => {
+            eprintln!(
+                "{}warning{}: could not check existence of helper binary at {}: {err}",
+                CARGO_WARN.render(),
+                CARGO_WARN.render_reset(),
+                helper_dylib.display(),
+            );
+        }
+    }
 
     // Find the Cargo binary to call.
     //
@@ -124,5 +145,8 @@ fn main() -> ExitCode {
 }
 
 const CARGO_WARN: anstyle::Style = anstyle::AnsiColor::Yellow
+    .on_default()
+    .effects(anstyle::Effects::BOLD);
+const CARGO_ERROR: anstyle::Style = anstyle::AnsiColor::BrightRed
     .on_default()
     .effects(anstyle::Effects::BOLD);

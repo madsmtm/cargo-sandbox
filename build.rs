@@ -15,6 +15,7 @@ fn main() {
     }
 
     // Embed the current version in the helper.
+    // TODO: Should we check this against `cargo-sandbox`'s current version?
     let version = env!("CARGO_PKG_VERSION");
     if cfg!(target_os = "macos") {
         // Read with: `otool -l target/debug/cargo-sandbox-helper | sed -n '/cmd LC_ID_DYLIB/,/cmd /p'`
