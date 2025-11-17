@@ -35,6 +35,6 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-${{ github.job }}-${{ matrix.name }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - run: cargo build
+      - run: cargo build --all-targets
 
       - run: cargo test
