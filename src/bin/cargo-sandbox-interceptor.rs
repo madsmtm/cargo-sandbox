@@ -143,7 +143,13 @@ unsafe extern "C" fn posix_spawn(
 
     let project_local_tmpdir = kind.target_dir().join("sandbox-tmp");
     create_dir_all(&project_local_tmpdir).unwrap();
-    let policy = get_policy(config, &project_local_tmpdir, &kind, ENV.get().unwrap());
+    let policy = get_policy(
+        config,
+        &project_local_tmpdir,
+        &kind,
+        ENV.get().unwrap(),
+        &project_local_tmpdir, // TODO
+    );
 
     // Wrap and spawn inside `sandbox-exec`. This basically ends up calling
     // `sandbox_init`, but allows us to avoid manually fork+exec-ing.
@@ -228,7 +234,13 @@ unsafe extern "C" fn execve(
 
     let project_local_tmpdir = kind.target_dir().join("sandbox-tmp");
     create_dir_all(&project_local_tmpdir).unwrap(); // Maybe even mount_tmpfs?
-    let policy = get_policy(config, &project_local_tmpdir, &kind, ENV.get().unwrap());
+    let policy = get_policy(
+        config,
+        &project_local_tmpdir,
+        &kind,
+        ENV.get().unwrap(),
+        &std::env::current_dir().unwrap(),
+    );
 
     let (_storage, env) = unsafe { override_env(&project_local_tmpdir, envp) };
 

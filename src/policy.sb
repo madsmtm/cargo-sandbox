@@ -63,6 +63,9 @@
 ; TODO: Allow loading built proc-macros.
 ; (allow file-map-executable (subpath {target_dir}))
 
+; Allow access to the current working directory.
+(allow file-read* file-test-existence (literal {cwd}))
+
 ; Allow reading headers, linker stubs and executing the actual C compiler and
 ; linker binaries.
 (allow process-exec file-read* file-test-existence (subpath {xcode_dir}))

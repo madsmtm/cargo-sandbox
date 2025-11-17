@@ -130,6 +130,7 @@ pub fn get_policy(
     project_local_tmpdir: &Path,
     kind: &ProcessKind,
     env: &Env,
+    cwd: &Path,
 ) -> CString {
     // (with send-signal SIGFPE)
     // (with no-sandbox) can be placed on `process-exec`, disables sandbox
@@ -216,6 +217,7 @@ pub fn get_policy(
             cargo_home = quote_path(&env.cargo_home),
             manifest_dir = quote_path(kind.manifest_dir()),
             target_dir = quote_path(kind.target_dir()),
+            cwd = quote_path(cwd),
             xcode_dir = quote_path(xcode_dir),
             // TODO: Pass further options.
             allow_network = boolean(config.network.all == Some(SandboxOption::Allow)),
