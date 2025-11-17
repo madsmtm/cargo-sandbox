@@ -43,6 +43,7 @@ use cargo_sandbox::kind::*;
 
 static ENV: OnceLock<Env> = OnceLock::new();
 static CONFIG: OnceLock<SandboxConfig> = OnceLock::new();
+static LOG_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 /// Load the sandbox configuration.
 ///
@@ -88,6 +89,11 @@ fn load_env() {
         parent_cargo_sandbox_pid,
     })
     .unwrap();
+
+    let log_path =
+        std::env::temp_dir().join(format!("cargo-sandbox-{parent_cargo_sandbox_pid}.txt"));
+    File::create(&log_path).unwrap();
+    LOG_PATH.set(log_path).unwrap();
 }
 
 /// Interpose `posix_spawn`.
@@ -278,14 +284,13 @@ unsafe fn cstr<'a>(p: *const c_char) -> Option<&'a CStr> {
 
 #[track_caller]
 fn log_msg(msg: impl Display) {
+    let Some(log_path) = LOG_PATH.get() else {
+        // Fail silently for now, the ctor doesn't seem to be run in certain cases?
+        return;
+    };
     // NOTE: We cannot log to stdout/stderr in here, that interferes with
     // Cargo's `exec_with_streaming`.
-    let mut file = File::options()
-        .create(true)
-        .append(true)
-        .write(true)
-        .open(Path::new(env!("CARGO_MANIFEST_DIR")).join("target/log.txt"))
-        .unwrap();
+    let mut file = File::options().append(true).open(log_path).unwrap();
 
     writeln!(&mut file, "{msg}").unwrap();
     file.flush().unwrap();
