@@ -56,7 +56,7 @@ pub fn parse_logs(stdout: ChildStdout, sender: Sender<SandboxLogMessage>) -> io:
             let entry: LogEntry = serde_json::from_slice(&json_data)?;
             sender
                 .send(entry.message)
-                .expect("reciever was deallocated earlier than expected");
+                .expect("receiver was deallocated earlier than expected");
             json_data.clear();
             stdout.skip_until(b',')?;
         }

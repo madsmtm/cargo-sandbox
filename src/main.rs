@@ -72,6 +72,12 @@ fn main() -> ExitCode {
     } else {
         // TODO: Maybe invoke `rustup which cargo` here, to avoid having to
         // "carry forwards" the interposition library.
+        //
+        // That would also simplify the question of what process spawns to
+        // sandbox (the answer would be "all" (maybe except the thing opened
+        // with `cargo doc --open`)), and would allow the interceptor to not
+        // need to be re-initialized several times in the process of finding
+        // the actual `cargo` executable.
         PathBuf::from(OsString::from("cargo"))
     };
 

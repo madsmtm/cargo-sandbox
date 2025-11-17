@@ -14,7 +14,8 @@ categories = [
     "virtualization",
 ]
 exclude = [".github"]
-default-run = "cargo-sandbox"
+# We don't use this, as `cargo run` doesn't rebuild the interceptor.
+# default-run = "cargo-sandbox"
 
 [[bin]]
 name = "cargo-sandbox-interceptor"
@@ -36,3 +37,6 @@ ctor = "0.6.0"
 [dev-dependencies]
 cargo-test-support = "0.8.1"
 snapbox = "0.6.21"
+
+[workspace.metadata.typos]
+default.extend-words.ANE = "ANE"

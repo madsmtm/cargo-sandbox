@@ -53,7 +53,7 @@ use super::ffi;
 /// In conclusion, I think it's safe to say that the deprecation is mostly
 /// there to nudge people towards the hardened runtime and entitlements
 /// instead, and that Apple will continue supporting this API for the
-/// forseeable future (and at the very least replace it with something
+/// foreseeable future (and at the very least replace it with something
 /// equivalent if they do decide to completely remove it).
 pub fn run_sandbox_init(policy: &CStr) -> Result<(), SandboxError> {
     let mut error = ptr::null_mut();
@@ -202,7 +202,7 @@ pub fn get_policy(
     // `sandbox_init_with_parameters` function instead - this is used by
     // Firefox, so even though it doesn't appear in any headers, it should
     // be reasonably safe to use. But we need to support passing an
-    // arbitary amount of user-specified paths, and then it's just much
+    // arbitrary amount of user-specified paths, and then it's just much
     // easier to generate the entire policy dynamically than to muck
     // around with quoting and string splitting in Scheme.
     CString::from_vec_with_nul(

@@ -13,15 +13,10 @@ use crate::ProcessKind;
 #[serde(rename_all = "kebab-case")]
 #[serde(deny_unknown_fields)]
 pub struct SandboxConfig {
-    /// Whether sandboxing is globally enabled.
     #[serde(default)]
     pub global: Option<SandboxOption>,
-    /// The global network configuration.
     #[serde(default)]
     pub network: SandboxNetworkConfig,
-    /// Additional paths to globally allow access to.
-    ///
-    /// TODO: Use `shellexpand` or similar on these?
     #[serde(default)]
     pub paths: Vec<SandboxPathConfig>,
 
@@ -43,8 +38,6 @@ pub struct SandboxPackageConfig {
     #[serde(default)]
     pub network: SandboxNetworkConfig,
     /// Additional paths to allow access to.
-    ///
-    /// TODO: Use `shellexpand` or similar on these?
     #[serde(default)]
     pub paths: Vec<SandboxPathConfig>,
 }
@@ -66,7 +59,6 @@ pub struct SandboxNetworkConfig {
 #[serde(deny_unknown_fields)]
 pub struct SandboxPathConfig {
     pub path: PathBuf,
-    /// Allow/disallow access to the path in general.
     #[serde(rename = "default")]
     pub default_: Option<SandboxOption>,
     pub read: Option<SandboxOption>,
@@ -76,16 +68,10 @@ pub struct SandboxPathConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SandboxOption {
-    /// Enable sandboxing.
-    ///
     /// -> (deny *)
     Deny,
-    /// Disable sandboxing and warn on accesses that would have been denied.
-    ///
     /// -> (allow * (with report))
     Warn,
-    /// Disable sandboxing.
-    ///
     /// -> (allow *)
     Allow,
 }
@@ -103,33 +89,6 @@ impl fmt::Display for SandboxOption {
 
 impl SandboxConfig {
     /// Load the configuration from `$CARGO_HOME/cargo-sandbox.toml`.
-    ///
-    /// Example configuration:
-    /// ```toml
-    /// # Enable sandboxing. This must be explicitly opted into by the user,
-    /// # as it would be too breaking otherwise.
-    /// enable = true
-    /// # Disallow network access for all crates. This is the default.
-    /// allow-network = false
-    /// # Allow specific paths. E.g. if the user uses non-standard binaries
-    /// # for development, such as if they've set Homebrew's Clang as their
-    /// # `CC` or linker.
-    /// allow-paths = [
-    ///     "/opt/homebrew/bin/clang",
-    /// ]
-    ///
-    /// # Example configuration for e.g. a build script that pulls in its
-    /// # contents from the network.
-    /// [build-scripts.mylib-sys]
-    /// allow-network = true
-    ///
-    /// # The `sqlx` crate requires local network access to the database.
-    /// [proc-macros.sqlx]
-    /// allow-network = true
-    /// ```
-    ///
-    /// Project-local configs aren't supported for this, as that'd enable
-    /// untrusted projects to just configure away the sandbox.
     pub fn load(cargo_home: &Path) -> io::Result<Self> {
         let config_path = cargo_home.join("cargo-sandbox.toml");
         match fs::read(config_path) {
