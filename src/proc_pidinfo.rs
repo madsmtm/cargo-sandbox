@@ -1,9 +1,9 @@
 use core::ffi::CStr;
 use core::mem;
 
-/// Walk the process parents, looking for the pid of the nearest parent
-/// `cargo-sandbox` process.
-pub fn parent_cargo_sandbox_pid() -> libc::pid_t {
+/// Walk the process parents, looking for the pid of the nearest parent with
+/// the given process name.
+pub fn parent_pid(process_name: &CStr) -> libc::pid_t {
     let mut pid = unsafe { libc::getpid() };
 
     while pid != 0 {
@@ -22,7 +22,7 @@ pub fn parent_cargo_sandbox_pid() -> libc::pid_t {
         }
 
         let name = unsafe { CStr::from_ptr(info.pbi_name.as_ptr()) };
-        if name == c"cargo-sandbox" {
+        if name == process_name {
             return pid;
         }
 

@@ -9,7 +9,6 @@ use crate::{
     config::{SandboxOption, SandboxPackageConfig},
     env::Env,
     kind::ProcessKind,
-    proc_pidinfo::parent_cargo_sandbox_pid,
 };
 
 use super::ffi;
@@ -147,7 +146,7 @@ pub fn get_policy(
 
     let message = format!(
         "cargo-sandbox({}, {}, {})",
-        parent_cargo_sandbox_pid(),
+        env.parent_cargo_sandbox_pid,
         if matches!(kind, ProcessKind::BuildScript { .. }) {
             "build-script"
         } else {

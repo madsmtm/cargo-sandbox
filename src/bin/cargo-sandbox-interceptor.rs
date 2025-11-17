@@ -24,6 +24,7 @@
 #![no_main]
 
 use cargo_sandbox::env::Env;
+use cargo_sandbox::proc_pidinfo::parent_pid;
 use core::ffi::{CStr, c_char, c_int, c_void};
 use core::fmt::Display;
 use core::ptr;
@@ -77,11 +78,14 @@ fn load_env() {
         .map(|path| std::env::split_paths(&path).collect())
         .unwrap_or_default();
 
+    let parent_cargo_sandbox_pid = parent_pid(c"cargo-sandbox");
+
     ENV.set(Env {
         cargo_home,
         rustup_home,
         developer_dir,
         path,
+        parent_cargo_sandbox_pid,
     })
     .unwrap();
 }

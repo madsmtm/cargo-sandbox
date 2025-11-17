@@ -7,4 +7,5 @@ pub struct Env {
     pub developer_dir: PathBuf,
     /// PATH.
     pub path: Vec<PathBuf>,
+    pub parent_cargo_sandbox_pid: libc::pid_t,
 }
