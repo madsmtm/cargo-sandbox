@@ -6,8 +6,9 @@ use std::{
 };
 
 use crate::{
-    CARGO_HOME, DEVELOPER_DIR, PATH, ProcessKind, RUSTUP_HOME,
     config::{SandboxOption, SandboxPackageConfig},
+    env::Env,
+    kind::ProcessKind,
     proc_pidinfo::parent_cargo_sandbox_pid,
 };
 
@@ -129,6 +130,7 @@ pub fn get_policy(
     config: SandboxPackageConfig,
     project_local_tmpdir: &Path,
     kind: &ProcessKind,
+    env: &Env,
 ) -> CString {
     // (with send-signal SIGFPE)
     // (with no-sandbox) can be placed on `process-exec`, disables sandbox
@@ -154,15 +156,14 @@ pub fn get_policy(
         kind.package(),
     );
     let user_temp_dir = std::env::temp_dir();
-    let developer_dir = DEVELOPER_DIR.get().unwrap();
-    let xcode_dir = if developer_dir.ends_with("Contents/Developer") {
+    let xcode_dir = if env.developer_dir.ends_with("Contents/Developer") {
         // /Applications/Xcode.app/Contents/Developer
-        developer_dir.parent().unwrap().parent().unwrap()
-    } else if developer_dir.ends_with("SDKs") {
+        env.developer_dir.parent().unwrap().parent().unwrap()
+    } else if env.developer_dir.ends_with("SDKs") {
         // /Library/Developer/CommandLineTools/SDKs.
-        developer_dir.parent().unwrap()
+        env.developer_dir.parent().unwrap()
     } else {
-        developer_dir
+        &env.developer_dir
     };
 
     let mut extra = String::new();
@@ -174,7 +175,7 @@ pub fn get_policy(
         "(allow process-exec file-read* file-test-existence "
     )
     .unwrap();
-    for path in PATH.get().unwrap() {
+    for path in &env.path {
         writeln!(&mut extra, "(subpath {})", quote_path(&path)).unwrap();
 
         // Allow `../lib` as well
@@ -212,8 +213,8 @@ pub fn get_policy(
             deny_with = deny_with,
             user_temp_dir = quote_path(&user_temp_dir),
             project_local_tmpdir = quote_path(project_local_tmpdir),
-            rustup_home = quote_path(&RUSTUP_HOME.get().unwrap()),
-            cargo_home = quote_path(&CARGO_HOME.get().unwrap()),
+            rustup_home = quote_path(&env.rustup_home),
+            cargo_home = quote_path(&env.cargo_home),
             manifest_dir = quote_path(kind.manifest_dir()),
             target_dir = quote_path(kind.target_dir()),
             xcode_dir = quote_path(xcode_dir),

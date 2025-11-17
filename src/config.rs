@@ -7,7 +7,7 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::ProcessKind;
+use crate::kind::ProcessKind;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -143,5 +143,28 @@ impl SandboxConfig {
         }
 
         cfg
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn readme_toml_example_configs_can_be_parsed() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("README.md");
+        let readme = std::fs::read_to_string(path).unwrap();
+        // Get contents in first ```toml ``` section.
+        let contents = readme
+            .split_once("```toml")
+            .unwrap()
+            .1
+            .split_once("```")
+            .unwrap()
+            .0;
+
+        let _: SandboxConfig = toml::from_str(contents)
+            .inspect_err(|err| println!("{err}"))
+            .unwrap();
     }
 }

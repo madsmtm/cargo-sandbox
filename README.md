@@ -70,7 +70,7 @@ local = "allow"
 # Allow global network access to `mylib-sys`'s build script, e.g. if it pulled
 # in its contents from the network.
 [build-scripts.mylib-sys.network]
-global = "allow"
+external = "allow"
 
 # Allow read access to some global `sdkconfig.defaults` that is set in
 # `[env] ESP_IDF_SDKCONFIG_DEFAULTS=...` for the `esp-idf-sys` build script.
@@ -84,23 +84,23 @@ read = "allow"
 [[paths]]
 path = "/Users/username/Downloads/zig"
 read = "allow"
-exec = "allow"
+# TODO: exec = "allow"
 
 # Allow read and execute access to packages in Homebrew.
 [[paths]]
 path = "/opt/homebrew/bin"
 read = "allow"
-exec = "allow"
+# TODO: exec = "allow"
 [[paths]]
 path = "/opt/homebrew/lib"
 read = "allow"
-exec = "allow"
+# TODO: exec = "allow"
 
 # Allow read and execute access to everything in the Nix store.
 [[paths]]
 path = "/nix/store"
 read = "allow"
-exec = "allow"
+# TODO: exec = "allow"
 
 # Disable sandboxing of the `foo` package altogether.
 [build-scripts.foo]
@@ -133,7 +133,7 @@ all = "allow" | "warn" | "deny"
 # TODO: Or just localhost?
 local = "allow" | "warn" | "deny"
 # Allow access to the public / global network.
-global = "allow" | "warn" | "deny"
+external = "allow" | "warn" | "deny"
 
 # Additional paths to globally allow access to.
 #
@@ -148,8 +148,8 @@ default = "allow" | "warn" | "deny"
 read = "allow" | "warn" | "deny"
 # Configure write access to files in the path.
 write = "allow" | "warn" | "deny"
-# Configure execute access to files in the path.
-exec = "allow" | "warn" | "deny"
+# TODO: Configure execute access to files in the path.
+# exec = "allow" | "warn" | "deny"
 
 
 # Configure individual build-scripts.

@@ -7,9 +7,7 @@ use std::process::{Command, ExitCode};
 use std::sync::mpsc::channel;
 use std::thread;
 
-use log_analyzer::SandboxLogKind;
-
-mod log_analyzer;
+use cargo_sandbox::log_analyzer::{self, SandboxLogKind};
 
 fn main() -> ExitCode {
     // Ignore arg0.

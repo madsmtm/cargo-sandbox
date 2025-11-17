@@ -17,10 +17,6 @@ exclude = [".github"]
 # We don't use this, as `cargo run` doesn't rebuild the interceptor.
 # default-run = "cargo-sandbox"
 
-[[bin]]
-name = "cargo-sandbox-interceptor"
-test = false
-
 [dependencies]
 anstream = "0.6.21"
 anstyle = "1.0.13"
@@ -37,6 +33,12 @@ ctor = "0.6.0"
 [dev-dependencies]
 cargo-test-support = "0.8.1"
 snapbox = "0.6.21"
+
+# The interceptor is not built normally, so that binary cannot use libtest.
+[[bin]]
+name = "cargo-sandbox-interceptor"
+test = false
+bench = false
 
 [workspace.metadata.typos]
 default.extend-words.ANE = "ANE"
