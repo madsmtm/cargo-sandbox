@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_PUBLIC_NETWORK_TESTS: 1
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: typos
+      - run: cargo fmt
+
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - run: cargo build
+      - run: cargo test
