@@ -56,7 +56,7 @@ TODO: Document how to use with `rust-analyzer`.
 
 By default, `cargo-sandbox` will allow read and execute access to files in to the crate's directory, system files, as well as anything in `$PATH` or `$PATH/../lib`. This should allow most projects to build out of the box, but if you find that this is too restrictive, you can configure the sandboxing using the configuration file in `$CARGO_HOME/cargo-sandbox.toml` (usually `~/.cargo/cargo-sandbox.toml`).
 
-Configuration can be global, scoped to a specific build script or scoped to a specific proc-macro (TODO: Actually the `rustc` invocation of dependencies).
+Configuration can be global, scoped to a specific build script or scoped to a specific proc-macro. After modifying the configuration, you might need to run `cargo clean`.
 
 An example configuration file could be:
 
