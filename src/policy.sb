@@ -64,7 +64,9 @@
 ; (allow file-map-executable (subpath {target_dir}))
 
 ; Allow access to the current working directory.
-(allow file-read* file-test-existence (literal {cwd}))
+;
+; TODO: A better solution here might be to give access to the workspace directory when in a workspace?
+(allow file-read* file-test-existence (subpath {cwd}))
 
 ; Allow reading headers, linker stubs and executing the actual C compiler and
 ; linker binaries.
