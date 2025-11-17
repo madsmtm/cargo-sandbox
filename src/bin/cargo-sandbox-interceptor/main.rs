@@ -1,4 +1,4 @@
-//! # Interposition helper
+//! Intercept Cargo's process spawning.
 //!
 //! TODO: Explain the purpose of this.
 //!
@@ -13,8 +13,8 @@
 //! `cargo-sandbox`. This can be done as follows:
 //!
 //! ```sh
-//! cargo build --bin cargo-sandbox-helper
-//! env DYLD_INSERT_LIBRARIES=$(pwd)/target/debug/cargo-sandbox-helper $(rustup which cargo) check
+//! cargo build --bin cargo-sandbox-interceptor
+//! env DYLD_INSERT_LIBRARIES=$(pwd)/target/debug/cargo-sandbox-interceptor $(rustup which cargo) check
 //! ```
 
 // HACK: `cargo install` has no facility for installing libraries (which this
@@ -483,7 +483,7 @@ pub unsafe fn override_env(
     // Storage location for new strings.
     let mut storage: Vec<CString> = Vec::new();
 
-    // Remove `cargo-sandbox-helper` from `DYLD_INSERT_LIBRARIES`, to
+    // Remove `cargo-sandbox-interceptor` from `DYLD_INSERT_LIBRARIES`, to
     // avoid trying to apply the sandbox on process invocations that `rustc`
     // or build scripts perform.
     let mut env: Vec<*const c_char> = unsafe { iter_null_terminated_lst(envp) }
@@ -492,7 +492,7 @@ pub unsafe fn override_env(
                 let mut new = Vec::from(b"DYLD_INSERT_LIBRARIES=");
                 for (i, lib) in libraries
                     .split(|c| *c == b':')
-                    .filter(|lib| !lib.ends_with(b"cargo-sandbox-helper"))
+                    .filter(|lib| !lib.ends_with(b"cargo-sandbox-interceptor"))
                     .enumerate()
                 {
                     if i != 0 {

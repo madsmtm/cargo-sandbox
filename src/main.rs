@@ -29,33 +29,33 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    // Find the `cargo-sandbox-helper` binary.
+    // Find the `cargo-sandbox-interceptor` binary.
     let current_bin = env::current_exe().expect("must be able to get the current executable");
-    let mut helper_dylib = current_bin.with_file_name("cargo-sandbox-helper");
+    let mut interceptor_dylib = current_bin.with_file_name("cargo-sandbox-interceptor");
     // Some platforms' executable files have extensions (e.g. Windows).
     // And yes, `EXE_EXTENSION` is correct here, Cargo installs the dylib
     // as-if it were an executable binary.
-    helper_dylib.set_extension(std::env::consts::EXE_EXTENSION);
+    interceptor_dylib.set_extension(std::env::consts::EXE_EXTENSION);
 
-    // Give better error message when the helper doesn't exist (dyld will
+    // Give better error message when the interceptor doesn't exist (dyld will
     // error here as well if it can't find it).
-    match helper_dylib.try_exists() {
+    match interceptor_dylib.try_exists() {
         Ok(true) => {}
         Ok(false) => {
             eprintln!(
-                "{}error{}: it seems that you don't have the required helper installed (looked in {}). Please install it with `cargo install cargo-sandbox`",
+                "{}error{}: it seems that you don't have the required interceptor installed (looked in {}). Please install it with `cargo install cargo-sandbox`",
                 CARGO_ERROR.render(),
                 CARGO_ERROR.render_reset(),
-                helper_dylib.display(),
+                interceptor_dylib.display(),
             );
             return ExitCode::FAILURE;
         }
         Err(err) => {
             eprintln!(
-                "{}warning{}: could not check existence of helper binary at {}: {err}",
+                "{}warning{}: could not check existence of interceptor dylib at {}: {err}",
                 CARGO_WARN.render(),
                 CARGO_WARN.render_reset(),
-                helper_dylib.display(),
+                interceptor_dylib.display(),
             );
         }
     }
@@ -84,10 +84,10 @@ fn main() -> ExitCode {
     let mut storage = env::var_os(env_name);
     let insert_libs = if let Some(libs) = &mut storage {
         libs.push(":");
-        libs.push(&helper_dylib);
+        libs.push(&interceptor_dylib);
         libs
     } else {
-        helper_dylib.as_os_str()
+        interceptor_dylib.as_os_str()
     };
 
     // Prepare logging sandbox output.

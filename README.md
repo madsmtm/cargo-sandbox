@@ -25,7 +25,7 @@ Install using:
 $ cargo install cargo-sandbox
 ```
 
-This will install two binaries `cargo-sandbox` and `cargo-sandbox-helper`.
+This will install the binary `cargo-sandbox` and the helper dylib `cargo-sandbox-interceptor`.
 
 You probably also want to also run:
 ```console

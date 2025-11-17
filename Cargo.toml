@@ -17,7 +17,7 @@ exclude = [".github"]
 default-run = "cargo-sandbox"
 
 [[bin]]
-name = "cargo-sandbox-helper"
+name = "cargo-sandbox-interceptor"
 test = false
 
 [dependencies]

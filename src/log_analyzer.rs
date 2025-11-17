@@ -12,10 +12,10 @@ use std::{
 use serde::Deserialize;
 
 pub fn stream_logs() -> io::Result<Child> {
-    // `cargo-sandbox-helper` communicates the correct PID here by walking its
-    // process hierarchy until it finds this process' PID. This allows us to
-    // correctly filter messages to only be those that originate from this
-    // invocation of `cargo-sandbox`.
+    // `cargo-sandbox-interceptor` communicates the correct PID here by
+    // walking its process hierarchy until it finds this process' PID. This
+    // allows us to correctly filter messages to only be those that originate
+    // from this invocation of `cargo-sandbox`.
     let current_pid = std::process::id();
     let predicate = format!(
         r#"process == "kernel" AND sender == "Sandbox" AND eventMessage CONTAINS "cargo-sandbox({current_pid}""#
