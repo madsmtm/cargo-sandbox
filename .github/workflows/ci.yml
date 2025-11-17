@@ -35,6 +35,12 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-${{ github.job }}-${{ matrix.name }}-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Cache target dir
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-${{ github.job }}-${{ matrix.name }}-${{ hashFiles('**/Cargo.lock') }}-target
+
       - run: cargo build --all-targets
 
       - run: cargo test
