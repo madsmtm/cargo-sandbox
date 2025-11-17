@@ -119,7 +119,8 @@ fn network_access_sandboxed_ping_global() {
                 assert_eq!(
                     output.status.success(),
                     cfg!(feature = "allow"),
-                    "failed to properly sandbox: \n{}",
+                    "failed to properly sandbox: \n{}{}",
+                    String::from_utf8(output.stdout).unwrap(),
                     String::from_utf8(output.stderr).unwrap(),
                 );
             }

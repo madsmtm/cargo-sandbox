@@ -12,6 +12,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: typos-cli
       - run: typos
       - run: cargo fmt
 
@@ -19,5 +22,19 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install PostgreSQL
+        run: brew install postgresql
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ github.job }}-${{ matrix.name }}-${{ hashFiles('**/Cargo.lock') }}
+
       - run: cargo build
+
       - run: cargo test
