@@ -46,8 +46,15 @@
 ; Deny stat in root dir
 ;; (deny file-read-metadata (literal {user_temp_dir}))
 
+; Allow reading and executing files installed via rustup.
 (allow process-exec file-read* (subpath (string-append {rustup_home} "/toolchains")))
 (allow process-exec file-read* (subpath (string-append {rustup_home} "/bin")))
+; TODO: Allow reading rustup settings? Probably generally undesirable, it's
+; usually needed when invoking `rustc` directly, but people should probably
+; instead invoke `$RUSTC` / `$CARGO`.
+; (allow file-read* (literal (string-append {rustup_home} "/settings.toml")) (literal "/etc/rustup/settings.toml"))
+
+; Allow reading from the Cargo registry.
 ; file-clone needed for jemalloc-sys and zstd-sys?
 (allow file-read* file-clone (subpath (string-append {cargo_home} "/registry/src")))
 (allow file-read* file-clone (subpath (string-append {cargo_home} "/git/checkouts")))
