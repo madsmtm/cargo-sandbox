@@ -18,7 +18,14 @@ fn main() -> ExitCode {
     // If called under Cargo as `cargo sandbox xyz`.
     if args.peek().map(|s| &**s) == Some(OsStr::new("sandbox")) {
         // TODO: Provide configuration option to allow this usage?
-        eprintln!("must be invoked as `cargo-sandbox` for TODO reason");
+        //
+        // Might also make sense to relax this after:
+        // https://github.com/rust-lang/cargo/issues/10049
+        eprintln!(
+            "{}error{}: must be invoked as `cargo-sandbox` (without the space), as Cargo prefers aliases in potentially untrusted `.cargo/config.toml`s over custom subcommands",
+            CARGO_ERROR.render(),
+            CARGO_ERROR.render_reset(),
+        );
         return ExitCode::FAILURE;
     }
 
@@ -26,8 +33,12 @@ fn main() -> ExitCode {
     let current_bin = env::current_exe().expect("must be able to get the current executable");
     let mut helper_dylib = current_bin.with_file_name("cargo-sandbox-helper");
     // Some platforms' executable files have extensions (e.g. Windows).
+    // And yes, `EXE_EXTENSION` is correct here, Cargo installs the dylib
+    // as-if it were an executable binary.
     helper_dylib.set_extension(std::env::consts::EXE_EXTENSION);
 
+    // Give better error message when the helper doesn't exist (dyld will
+    // error here as well if it can't find it).
     match helper_dylib.try_exists() {
         Ok(true) => {}
         Ok(false) => {

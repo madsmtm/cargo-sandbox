@@ -9,7 +9,7 @@ Additionally, the Rust compiler is in itself a huge piece of software that may h
 - File reading functionality such as `include_str!("/etc/passwd")` or `#[path = "..."]`. See also [RFC 2794](https://github.com/rust-lang/rfcs/pull/2794).
 - A buffer overflow in e.g. LLVM might allow malicous code to break out of any local sandbox that `rustc` were to implement.
 
-Finally, local configuration files (`.cargo/config.toml`, `rust-toolchain.toml` and local `Cargo.toml`, though not dependencies' `Cargo.toml`) allow things such as overriding the linker (with e.g. a local script) or the Rust toolchain (potentially downgrading to a less secure version).
+Finally, local configuration files (`.cargo/config.toml`, `rust-toolchain.toml` and local `Cargo.toml`, though not dependencies' `Cargo.toml`) allow things such as overriding the linker (with e.g. a local script) or the Rust toolchain (potentially downgrading to a less secure version). See also [RFC 3279](https://github.com/rust-lang/rfcs/pull/3279).
 
 All of these are within scope of this threat model.
 
