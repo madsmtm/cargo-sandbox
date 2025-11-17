@@ -4,7 +4,6 @@ use cargo_test_support::Project;
 
 mod build_scripts;
 mod proc_macros;
-mod sqlx;
 
 // Grabbed from Cargo.
 pub mod prelude {
