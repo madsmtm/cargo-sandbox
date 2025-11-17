@@ -105,6 +105,11 @@ fn read_etc_passwd() {
 /// Test with a build script that tries to run `ping github.com`.
 #[cargo_test(public_network_test)]
 fn network_access_sandboxed_ping_global() {
+    if std::env::var_os("CI").is_some() {
+        // GitHub Actions doesn't seem to support `ping`.
+        return;
+    }
+
     let p = sandboxed_build_script(
         r#"
             use std::process::Command;
