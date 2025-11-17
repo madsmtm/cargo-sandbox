@@ -1,23 +1,38 @@
-[workspace]
-members = ["interpose-sandbox"]
-
 [package]
 name = "cargo-sandbox"
-version = "0.1.0"
+version = "0.0.1" # Required by `-current_version` flag to be in format `X[.Y[.Z]]`
 edition = "2024"
+rust-version = "1.91" # TODO: Test this
+description = "Fearlessly build arbitrary untrusted Cargo projects"
+repository = "https://github.com/madsmtm/cargo-sandbox"
+license = "Zlib OR Apache-2.0 OR MIT"
+keywords = ["cargo", "sandbox", "proc-macro", "build-script", "security"]
+categories = [
+    "command-line-utilities",
+    "development-tools::cargo-plugins",
+    "security",
+    "virtualization",
+]
+exclude = [".github"]
+default-run = "cargo-sandbox"
+
+[[bin]]
+name = "cargo-sandbox-helper"
+test = false
 
 [dependencies]
 anstream = "0.6.21"
 anstyle = "1.0.13"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
+libc = "0.2.177"
+errno = "0.3.14"
+toml = "0.9.8"
+home = "0.5.11"
+ctor = "0.6.0"
 
+# We test using Cargo's testing facilities, to hopefully make this easier
+# to upstream into Cargo some day.
 [dev-dependencies]
 cargo-test-support = "0.8.1"
 snapbox = "0.6.21"
-
-[profile.interpose-sandbox]
-inherits = "release"
-panic = "abort"
-lto = true
-strip = true

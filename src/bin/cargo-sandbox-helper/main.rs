@@ -1,3 +1,28 @@
+//! # Interposition helper
+//!
+//! TODO: Explain the purpose of this.
+//!
+//! NOTE: Interposing doesn't work with system binaries like `/bin/sh` and
+//! `/usr/bin/cc` (the latter of which `rustc` calls to link) or binaries
+//! using a hardened runtime. But that's fine, we only intend on using this on
+//! the `cargo` (and `rustup-init`) binary.
+//!
+//! ## Raw usage
+//!
+//! If you're testing things, you might want to use this without going through
+//! `cargo-sandbox`. This can be done as follows:
+//!
+//! ```sh
+//! cargo build --bin cargo-sandbox-helper
+//! env DYLD_INSERT_LIBRARIES=$(pwd)/target/debug/cargo-sandbox-helper $(rustup which cargo) check
+//! ```
+
+// HACK: `cargo install` has no facility for installing libraries (which this
+// really is), so we work around it by telling Cargo that it's a binary, while
+// using `#![no_main]` and passing flags like `-dylib` and `-shared` to the
+// linker via `build.rs`.
+#![no_main]
+
 use config::SandboxConfig;
 use core::ffi::{CStr, c_char, c_int, c_void};
 use core::fmt::Display;
@@ -421,12 +446,7 @@ fn log_msg(msg: impl Display) {
         .create(true)
         .append(true)
         .write(true)
-        .open(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .parent()
-                .unwrap()
-                .join("target/log.txt"),
-        )
+        .open(Path::new(env!("CARGO_MANIFEST_DIR")).join("target/log.txt"))
         .unwrap();
 
     writeln!(&mut file, "{msg}").unwrap();
@@ -463,7 +483,7 @@ pub unsafe fn override_env(
     // Storage location for new strings.
     let mut storage: Vec<CString> = Vec::new();
 
-    // Remove `libinterpose_sandbox.dylib` from `DYLD_INSERT_LIBRARIES`, to
+    // Remove `cargo-sandbox-helper` from `DYLD_INSERT_LIBRARIES`, to
     // avoid trying to apply the sandbox on process invocations that `rustc`
     // or build scripts perform.
     let mut env: Vec<*const c_char> = unsafe { iter_null_terminated_lst(envp) }
@@ -472,7 +492,7 @@ pub unsafe fn override_env(
                 let mut new = Vec::from(b"DYLD_INSERT_LIBRARIES=");
                 for (i, lib) in libraries
                     .split(|c| *c == b':')
-                    .filter(|lib| !lib.ends_with(b"libinterpose_sandbox.dylib"))
+                    .filter(|lib| !lib.ends_with(b"cargo-sandbox-helper"))
                     .enumerate()
                 {
                     if i != 0 {

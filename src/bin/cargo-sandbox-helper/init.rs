@@ -144,7 +144,7 @@ pub fn get_policy(
     let deny_with = "";
 
     let message = format!(
-        "interpose-sandbox({}, {}, {})",
+        "cargo-sandbox({}, {}, {})",
         parent_cargo_sandbox_pid(),
         if matches!(kind, ProcessKind::BuildScript { .. }) {
             "build-script"

@@ -140,14 +140,19 @@ checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
 
 [[package]]
 name = "cargo-sandbox"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anstream",
  "anstyle",
  "cargo-test-support",
+ "ctor",
+ "errno",
+ "home",
+ "libc",
  "serde",
  "serde_json",
  "snapbox",
+ "toml",
 ]
 
 [[package]]
@@ -843,18 +848,6 @@ checksum = "6717a8d2a5a929a1a2eb43a12812498ed141a0bcfb7e8f7844fbdbe4303bba9f"
 dependencies = [
  "equivalent",
  "hashbrown",
-]
-
-[[package]]
-name = "interpose-sandbox"
-version = "0.1.0"
-dependencies = [
- "ctor",
- "errno",
- "home",
- "libc",
- "serde",
- "toml",
 ]
 
 [[package]]

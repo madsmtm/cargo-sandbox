@@ -12,13 +12,13 @@ use std::{
 use serde::Deserialize;
 
 pub fn stream_logs() -> io::Result<Child> {
-    // `interpose-sandbox` communicates the correct PID here by walking its
+    // `cargo-sandbox-helper` communicates the correct PID here by walking its
     // process hierarchy until it finds this process' PID. This allows us to
     // correctly filter messages to only be those that originate from this
     // invocation of `cargo-sandbox`.
     let current_pid = std::process::id();
     let predicate = format!(
-        r#"process == "kernel" AND sender == "Sandbox" AND eventMessage CONTAINS "interpose-sandbox({current_pid}""#
+        r#"process == "kernel" AND sender == "Sandbox" AND eventMessage CONTAINS "cargo-sandbox({current_pid}""#
     );
 
     // See `man log` for details on the parameters this takes.
@@ -106,8 +106,7 @@ impl<'de> serde::Deserialize<'de> for SandboxLogMessage {
                 // The logging of sandbox events is done by the kernel, so all the
                 // useful information is contained inside the event message. E.g. the
                 // process identifier is always 0.
-                let (sandbox_message, custom) =
-                    message.rsplit_once("\ninterpose-sandbox(").unwrap();
+                let (sandbox_message, custom) = message.rsplit_once("\ncargo-sandbox(").unwrap();
                 let sandbox_message = sandbox_message
                     .strip_prefix("Sandbox: ")
                     .unwrap_or(sandbox_message);

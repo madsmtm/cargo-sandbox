@@ -1,7 +1,8 @@
 use anstream::{eprint, eprintln};
 use std::collections::{BTreeSet, HashMap};
+use std::env;
 use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 use std::sync::mpsc::channel;
 use std::thread;
@@ -12,7 +13,7 @@ mod log_analyzer;
 
 fn main() -> ExitCode {
     // Ignore arg0.
-    let mut args = std::env::args_os().skip(1).peekable();
+    let mut args = env::args_os().skip(1).peekable();
 
     // If called under Cargo as `cargo sandbox xyz`.
     if args.peek().map(|s| &**s) == Some(OsStr::new("sandbox")) {
@@ -21,11 +22,17 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    // Find the `cargo-sandbox-helper` binary.
+    let current_bin = env::current_exe().expect("must be able to get the current executable");
+    let mut helper_dylib = current_bin.with_file_name("cargo-sandbox-helper");
+    // Some platforms' executable files have extensions (e.g. Windows).
+    helper_dylib.set_extension(std::env::consts::EXE_EXTENSION);
+
     // Find the Cargo binary to call.
     //
     // TODO: Implement some sort of modified `rustup` searching, to avoid
     // malicious `rust-toolchain.toml`.
-    let cargo = if let Some(cargo) = std::env::var_os("CARGO")
+    let cargo = if let Some(cargo) = env::var_os("CARGO")
         && let cargo = PathBuf::from(cargo)
         && cargo.file_stem() != Some(OsStr::new("cargo-sandbox"))
     {
@@ -36,49 +43,19 @@ fn main() -> ExitCode {
         PathBuf::from(OsString::from("cargo"))
     };
 
-    // Unpack `interpose-sandbox` into temporary directory and build
-    // `libinterpose_dylib.dylib`.
-    //
-    // TODO: Ensure that build scripts etc. can't write to said temporary dir.
-    //
-    // TODO: Maybe avoid this somehow by shipping `interpose-sandbox` differently?
-    let cargo_sandbox_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let mut cmd = Command::new(&cargo);
-    cmd.arg("build")
-        .arg("--target")
-        .arg(env!("HOST_TARGET"))
-        .arg("--manifest-path")
-        .arg(cargo_sandbox_dir.join("interpose-sandbox/Cargo.toml"));
-    if std::env::var_os("__CARGO_TEST_ROOT").is_some() {
-        // Unset `cargo-test-support` envs.
-        cmd.env_remove("HOME")
-            .env_remove("CARGO_HOME")
-            .env_remove("__CARGO_TEST_ROOT")
-            .env_remove("__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS")
-            .env_remove("__CARGO_TEST_DISABLE_GLOBAL_KNOWN_HOST")
-            .env_remove("__CARGO_TEST_FIXED_RETRY_SLEEP_MS")
-            .env_remove("CARGO_INCREMENTAL")
-            .env_remove("GIT_CONFIG_NOSYSTEM")
-            .env_remove("CARGO");
-        // Avoid `interpose-sandbox`'s build status polluting the actual status.
-        cmd.arg("--quiet");
-    }
-    let status = cmd.status().unwrap();
-    assert!(status.success(), "failed building `interpose-sandbox`");
-    let dylib_path = cargo_sandbox_dir
-        .join("target")
-        .join(env!("HOST_TARGET"))
-        .join("debug/libinterpose_sandbox.dylib");
-
-    // Append interposition lib to `DYLD_INSERT_LIBRARIES`.
-    // TODO: Prepend vs. append?
-    let mut storage = std::env::var_os("DYLD_INSERT_LIBRARIES");
+    // Append interposition lib to `DYLD_INSERT_LIBRARIES` / `LD_PRELOAD`.
+    let env_name = if cfg!(target_os = "macos") {
+        "DYLD_INSERT_LIBRARIES"
+    } else {
+        "LD_PRELOAD"
+    };
+    let mut storage = env::var_os(env_name);
     let insert_libs = if let Some(libs) = &mut storage {
         libs.push(":");
-        libs.push(&dylib_path);
+        libs.push(&helper_dylib);
         libs
     } else {
-        dylib_path.as_os_str()
+        helper_dylib.as_os_str()
     };
 
     // Prepare logging sandbox output.
@@ -98,7 +75,7 @@ fn main() -> ExitCode {
         // Forward to the actual Cargo command.
         let status = Command::new(cargo)
             .args(args)
-            .env("DYLD_INSERT_LIBRARIES", insert_libs)
+            .env(env_name, insert_libs)
             .status()
             .unwrap();
 

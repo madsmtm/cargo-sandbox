@@ -4,7 +4,48 @@ Goal: Allow fearlessly running `cargo-sandbox build` within an arbitrary untrust
 
 This includes _building_ (though not necessarily _running_) the code for arbitrary untrusted dependencies.
 
-Obligatory XKCD: <https://xkcd.com/2044/>
+[Obligatory XKCD](https://xkcd.com/2044/).
+
+
+## Platforms
+
+| Platform | Support | Sandboxing mechanism |
+| -------- | ------- | -------------------- |
+| macOS    | ⚠️      | `sandbox_init`       |
+| Linux    | ❌      | TODO                 |
+| FreeBSD  | ❌      | TODO                 |
+| Windows  | ❌      | TODO                 |
+
+
+## Setup
+
+Install using:
+
+```console
+$ cargo install cargo-sandbox
+```
+
+This will install two binaries `cargo-sandbox` and `cargo-sandbox-helper`.
+
+You probably also want to also run:
+```console
+$ rustup set auto-install disable
+```
+
+To avoid issues with a malicious `rust-toolchain.toml` installing an unexpected toolchain automatically.
+
+
+## Usage
+
+```console
+$ cd your_project
+$ cargo-sandbox check
+$ cargo-sandbox build
+$ cargo-sandbox doc
+$ cargo-sandbox ...
+```
+
+This invokes `cargo $YOUR_CMD`, and will sandbox all `rustc` and build script invocations that Cargo makes.
 
 
 ## TODO
@@ -59,7 +100,7 @@ It also doesn't help much, in larger projects (which is where sandboxing becomes
 
 User configuration is read from ``.
 
-Compile [`interpose-sandbox`](./interpose-sandbox) to a `.dylib`, and spawn the normal `cargo` process with it inserted as a `DYLD_INSERT_LIBRARIES`.
+Compile [`cargo-sandbox-helper`](./src/bin/cargo-sandbox-helper) to a `.dylib`, and spawn the normal `cargo` process with it inserted as a `DYLD_INSERT_LIBRARIES`.
 
 TODO: Place the sandboxing stuff in non-writable directories.
 
@@ -71,7 +112,7 @@ TODO: How do we pass configuration? Cannot be via environment variables, since t
   - To allow Cargo to "send" files.
 - Maybe use `proc_pidinfo` to find parent process' PID (the PID of `cargo-sandbox`), and match that against some socket-like thing?
   - `socketpair`?
-- Maybe interpose some other part of Cargo and do static initialization then. Would work weirdly, `interpose-sandbox` may be re-initialized several times in the process of finding the actual `cargo` executable. But maybe we can get around that by looking the exe up in `cargo-sandbox`? That would also simplify the question of what process spawns to sandbox (the answer would be "all" (maybe except the thing opened with `cargo doc --open`)).
+- Maybe interpose some other part of Cargo and do static initialization then. Would work weirdly, `cargo-sandbox-helper` may be re-initialized several times in the process of finding the actual `cargo` executable. But maybe we can get around that by looking the exe up in `cargo-sandbox`? That would also simplify the question of what process spawns to sandbox (the answer would be "all" (maybe except the thing opened with `cargo doc --open`)).
 
 
 ## Limitations
@@ -117,12 +158,6 @@ cargo clean
 ./cargo-sandbox build -pcargo-sandbox
 ```
 
-## Platform details
-
-### macOS
-
-macOS uses `sandbox-exec` / `sandbox_init`, TODO.
-
 ## Resources
 
 - Somebody already did this: <https://github.com/trailofbits/build-wrap>!!!
@@ -145,6 +180,7 @@ macOS uses `sandbox-exec` / `sandbox_init`, TODO.
   - See also SELinux
   - Maybe <https://github.com/containers/bubblewrap> is the better option.
   - See also <https://github.com/AsahiLinux/muvm>
+  - <https://lib.rs/crates/landlock>
 - Background: <https://media.blackhat.com/bh-dc-11/Blazakis/BlackHat_DC_2011_Blazakis_Apple_Sandbox-wp.pdf>
 - Background: <https://theapplewiki.com/wiki/Dev:Seatbelt>
 - Examples: <https://github.com/s7ephen/OSX-Sandbox--Seatbelt--Profiles>
