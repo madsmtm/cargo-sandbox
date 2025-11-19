@@ -106,7 +106,9 @@ impl<'de> serde::Deserialize<'de> for SandboxLogMessage {
                 // The logging of sandbox events is done by the kernel, so all the
                 // useful information is contained inside the event message. E.g. the
                 // process identifier is always 0.
-                let (sandbox_message, custom) = message.rsplit_once("\ncargo-sandbox(").unwrap();
+                let (sandbox_message, custom) = message
+                    .rsplit_once("\ncargo-sandbox(")
+                    .unwrap_or_else(|| panic!("could not find cargo-sandbox marker:\n{message}"));
                 let sandbox_message = sandbox_message
                     .strip_prefix("Sandbox: ")
                     .unwrap_or(sandbox_message);

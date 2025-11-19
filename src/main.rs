@@ -117,7 +117,9 @@ fn main() -> ExitCode {
 
         log_child.kill().unwrap();
 
-        log_thread.join().unwrap();
+        log_thread
+            .join()
+            .unwrap_or_else(|err| std::panic::resume_unwind(err));
 
         let mut entries: HashMap<_, Vec<_>> = HashMap::new();
         for entry in log_receiver {

@@ -302,6 +302,7 @@ fn log_msg(msg: impl Display) {
     };
     // NOTE: We cannot log to stdout/stderr in here, that interferes with
     // Cargo's `exec_with_streaming`.
+    // TODO: Work on a way to pass data between `cargo-sandbox` and `cargo-sandbox-interceptor`, integrate into `tracing!`.
     let mut file = File::options().append(true).open(log_path).unwrap();
 
     writeln!(&mut file, "{msg}").unwrap();
