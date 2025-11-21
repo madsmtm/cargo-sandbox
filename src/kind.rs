@@ -68,6 +68,8 @@ impl<'a> ProcessKind<'a> {
                 || first_arg == Some(c"-")
                 || first_arg == Some(c"--print=target-spec-json")
             {
+                // TODO: We should still sandbox these, the user might have
+                // specified `[build] rustc = "..."`.
                 return ProcessKind::Other;
             }
 
